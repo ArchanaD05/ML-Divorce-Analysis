@@ -1,0 +1,137 @@
+---
+title: "homework2"
+author: "archana muskaan samruddhi"
+date: "2023-03-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+#install.packages("ggplot2",dependencies=TRUE)
+library(ggplot2)
+```
+```{r}
+#Extract the 299 rows for two attributes
+divorce <- divorce[1:170, c("Atr9", "Atr40", "Class")]
+```
+```{r}
+plot1<- ggplot(data = divorce)+aes(x=Atr9, y=Atr40) +geom_point(aes(colour = Class, shape= Class),size = 3)+scale_shape_binned()+ xlab("Atr9") + ylab("Atr40") +theme(plot.title = element_text(hjust = 0.5))
+plot1
+```
+```{r}
+#Extract the 170 rows for two attributes
+divorce <- divorce[1:170, c("Atr5", "Atr6", "Class")]
+```
+```{r}
+plot1<- ggplot(data = divorce)+aes(x=Atr5, y=Atr6) +geom_point(aes(colour = Class, shape= Class),size = 3)+scale_shape_binned()+ xlab("Atr5") + ylab("Atr6") +theme(plot.title = element_text(hjust = 0.5))
+plot1
+```
+```{r}
+
+linearmodel <- lm(Class~.,data = divorce)
+summary(linearmodel)
+
+```
+```{r}
+#install.packages("car",dependencies = TRUE)
+library(car)
+viftable<- vif(linearmodel)
+viftable
+
+```
+```{r}
+sorttable <- sort(viftable,decreasing=TRUE)
+sorttable
+sorttable[sorttable < 8]
+```
+```{r}
+library(neuralnet)
+set.seed(9)
+Divorce_Index <- sample(nrow(divorce_1_1_), 0.7 * nrow(divorce), replace = FALSE)
+Divorce_Train <- divorce[Divorce_Index, ]
+Divorce_Test <- divorce[-Divorce_Index, ]
+
+#Create the first neural network
+NeuralNetwork1 <- neuralnet(Class ~ Atr6 + Atr7 + Atr42 + Atr43 + Atr45 + Atr46 + Atr47 + Atr48 + Atr52, Divorce_Train,hidden = 4, lifesign = "minimal", linear.output = FALSE, threshold = 0.1)
+
+#Plot the neural network
+plot(NeuralNetwork1)
+
+```
+```{r}
+
+#Test the neural network 
+Temp_Test1 <- subset(Divorce_Test, select = c("Atr6","Atr7","Atr42","Atr43","Atr45","Atr46","Atr47","Atr48","Atr52"))
+
+NeuralNetwork1.results <- compute(NeuralNetwork1, Temp_Test1)
+
+results <- data.frame(actual = Divorce_Test$Class, prediction = NeuralNetwork1.results$net.result)
+
+#View the results
+results$prediction <- round(results$prediction)
+results[1:15, ]
+
+#Convert the data type to factor
+Actual <- as.factor(Divorce_Test$Class)
+NeuralNet_Result <- as.factor(round(results$prediction))
+
+#Build confusion matrix
+PredictTable <- table(NeuralNet_Result, Actual)
+PredictTable
+
+#Calculate the accuracy
+sum(diag(PredictTable) / sum(PredictTable))
+```
+```{r}
+#Create the second neural network
+NeuralNetwork2 <- neuralnet(Class ~ Atr7 + Atr43 + Atr46 + Atr48 + Atr52, Divorce_Train,
+                 hidden = 4, lifesign = "minimal", linear.output = FALSE, threshold = 0.1)
+
+plot(NeuralNetwork2)
+
+#Test the neural network 
+Temp_Test2 <- subset(Divorce_Test, select = c("Atr7","Atr43","Atr46","Atr48","Atr52"))
+
+NeuralNetwork2.results <- compute(NeuralNetwork2, Temp_Test2)
+
+results1 <- data.frame(actual = Divorce_Test$Class, prediction = NeuralNetwork2.results$net.result)
+
+#View the results
+results1$prediction <- is.numeric(results$prediction)
+results1$prediction <- round(results$prediction)
+results1[1:15, ]
+
+#Convert the data type to factor
+Actual1 <- as.factor(Divorce_Test$Class)
+NeuralNet_Result1 <- as.factor(round(results1$prediction))
+
+#Build confusion matrix
+PredictTable1 <- table(NeuralNet_Result1, Actual1)
+PredictTable1
+
+#Calculate the accuracy
+sum(diag(PredictTable1) / sum(PredictTable1))
+```
+
